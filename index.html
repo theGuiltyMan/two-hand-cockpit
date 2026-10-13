@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- iPhone Safari has no page fullscreen; launched from the home screen it runs without browser chrome instead -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Two-Hand Cockpit Duel</title>
 <!-- PROTOTYPE: throwaway peer-to-peer duel build. See NOTES.md. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -200,6 +204,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   <div class="seg" role="group" aria-label="Aim gearing">
     <button data-gear="1">Aim 1×</button><button data-gear="3">3×</button><button data-gear="6">6×</button>
   </div>
+  <button id="btnFull" class="act" hidden>Fullscreen</button>
   <button id="btnHelp" class="act">Controls</button>
 </div>
 
@@ -945,6 +950,24 @@ function syncBar(){
 for (const b of document.querySelectorAll('[data-cam]')) b.addEventListener('click', () => setCam(b.dataset.cam));
 for (const b of document.querySelectorAll('[data-gear]')) b.addEventListener('click', () => { gear = +b.dataset.gear; syncURL(); syncBar(); });
 $('#btnHelp').addEventListener('click', () => { $('#help').hidden = !$('#help').hidden; });
+{
+  const btn = $('#btnFull'), root = document.documentElement;
+  const req = root.requestFullscreen || root.webkitRequestFullscreen;
+  const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+  btn.hidden = !req || !(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  btn.addEventListener('click', async () => {
+    try {
+      if (fsEl()) await (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      else {
+        await req.call(root, { navigationUI:'hide' });
+        try { await screen.orientation?.lock?.('landscape'); } catch (e) {} // phones only; desktops refuse
+      }
+    } catch (e) { flash('Fullscreen was blocked'); }
+  });
+  const sync = () => setText(btn, fsEl() ? 'Exit fullscreen' : 'Fullscreen');
+  document.addEventListener('fullscreenchange', sync);
+  document.addEventListener('webkitfullscreenchange', sync);
+}
 $('#help').addEventListener('pointerdown', () => { $('#help').hidden = true; });
 const bar = $('#bar');
 new ResizeObserver(() => document.documentElement.style.setProperty('--bar-h', bar.offsetHeight + 'px')).observe(bar);
