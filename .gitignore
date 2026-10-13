@@ -1,0 +1,3 @@
+# Only the peer-to-peer build is published; the relay fallback stays local.
+server.ts
+index-relay.html
