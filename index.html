@@ -107,7 +107,7 @@ svg [data-held="1"] .grip-part,.dial[data-held="1"] .knob-body{stroke:var(--teal
 .dial .knob-ind{stroke:var(--stencil);stroke-width:3;stroke-linecap:round}
 .dial .dimple{fill:#0d0f10;stroke:var(--rivet)}
 
-#bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(8px + env(safe-area-inset-bottom,0px));display:flex;flex-wrap:wrap;
+#bar{position:fixed;left:0;right:0;margin-inline:auto;width:max-content;bottom:calc(8px + env(safe-area-inset-bottom,0px));display:flex;flex-wrap:wrap;
   gap:6px;align-items:center;justify-content:center;padding:6px;max-width:calc(100% - 2 * var(--gutter));box-sizing:border-box}
 .seg{display:flex;gap:2px;background:#0d0f10;border-radius:7px;padding:2px}
 #bar button{font:600 12px/1 var(--f-ui);letter-spacing:.04em;color:var(--stencil);background:transparent;border:0;border-radius:5px;padding:8px 10px;cursor:pointer}
@@ -136,6 +136,35 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 #help dd{margin:0}
 #help p{margin:6px 0 0;color:var(--dim)}
 @media (prefers-reduced-motion:reduce){.denied{animation:none}}
+.dial-head span{white-space:nowrap}
+#rotate{display:none}
+
+/* Phone landscape: every pixel of height counts. Switcher moves to the top, hand chips go
+   (the coloured outlines on the controls already show which hand holds what), and the
+   instrument plates size from the viewport height so they never climb into the top HUD. */
+@media (max-height:500px){
+  #hands{display:none}
+  #score{font-size:11px;padding:5px 8px;gap:2px 8px}
+  #radar{width:80px;height:80px}
+  #bar{top:calc(8px + env(safe-area-inset-top,0px));bottom:auto;padding:3px;gap:4px;max-width:calc(100% - 2 * var(--gutter) - 240px)}
+  #overlay{top:52%;padding:10px 14px;max-height:80dvh;overflow:auto}
+  #overlay h2{font-size:17px}
+  #bar button{padding:6px 8px;font-size:11px}
+  .dock{bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+  #thrWrap{width:auto;display:flex;align-items:flex-end;gap:8px}
+  #thr{width:clamp(104px,calc((100dvh - 104px) * .606),200px)}
+  #btnStop{width:64px;margin:0;padding:12px 0;font-size:12px;line-height:1.15}
+  #aimWrap{flex-direction:row;align-items:flex-end;gap:8px}
+  .dial{width:clamp(96px,calc((100dvh - 150px) * .72),150px);padding:4px 6px 6px}
+  #fire{width:84px;align-self:center}
+}
+@media (pointer:coarse){.keyhint{display:none}}
+@media (orientation:portrait) and (pointer:coarse){
+  #rotate{display:flex;position:fixed;inset:0;z-index:20;flex-direction:column;gap:8px;align-items:center;justify-content:center;
+    background:var(--dash);color:var(--stencil);text-align:center;padding-inline:var(--gutter)}
+  #rotate b{font-family:var(--f-stencil);font-weight:400;letter-spacing:.08em;font-size:22px}
+  #rotate span{color:var(--dim)}
+}
 </style>
 </head>
 <body>
@@ -164,9 +193,9 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   <svg id="thr" viewBox="0 0 200 330">
     <rect class="plate-bg" x="1" y="1" width="198" height="328" rx="10"/>
     <text class="plate-label" x="100" y="26" text-anchor="middle" font-size="17">THRUSTERS</text>
-    <text class="tick-label" x="60" y="41" text-anchor="middle">Q/A</text>
-    <text class="tick-label" x="100" y="41" text-anchor="middle">W/S</text>
-    <text class="tick-label" x="140" y="41" text-anchor="middle">E/D</text>
+    <text class="tick-label keyhint" x="60" y="41" text-anchor="middle">Q/A</text>
+    <text class="tick-label keyhint" x="100" y="41" text-anchor="middle">W/S</text>
+    <text class="tick-label keyhint" x="140" y="41" text-anchor="middle">E/D</text>
     <g id="thrTicks"></g>
     <line class="zero" x1="44" y1="170" x2="156" y2="170"/>
     <rect class="slot" x="54" y="46" width="12" height="248" rx="6"/>
@@ -180,18 +209,18 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     <text id="valL" class="val" x="60" y="318" text-anchor="middle">+000</text>
     <text id="valR" class="val" x="140" y="318" text-anchor="middle">+000</text>
   </svg>
-  <button id="btnStop" type="button">ALL STOP <kbd>X</kbd></button>
+  <button id="btnStop" type="button">ALL STOP <kbd class="keyhint">X</kbd></button>
 </div>
 
 <div id="aimWrap" class="dock">
-  <button id="fire" type="button" data-ready="1">FIRE<small>SPACE</small><svg viewBox="0 0 100 100"><circle id="reloadArc" cx="50" cy="50" r="47" stroke-dasharray="0 400"/></svg></button>
+  <button id="fire" type="button" data-ready="1">FIRE<small class="keyhint">SPACE</small><svg viewBox="0 0 100 100"><circle id="reloadArc" cx="50" cy="50" r="47" stroke-dasharray="0 400"/></svg></button>
   <div class="dial plate" id="dialYaw" data-ctrl="yaw">
-    <div class="dial-head"><span class="label">AIM · YAW</span><span class="num" id="valYaw">+000°</span></div>
+    <div class="dial-head"><span class="label">YAW</span><span class="num" id="valYaw">+000°</span></div>
     <svg viewBox="0 0 120 120"><circle class="bezel" cx="60" cy="60" r="57"/><g class="dticks"></g>
       <g class="knob"><circle class="knob-body" cx="60" cy="60" r="40"/><line class="knob-ind" x1="60" y1="52" x2="60" y2="24"/><circle class="dimple" cx="60" cy="38" r="7"/></g></svg>
   </div>
   <div class="dial plate" id="dialPitch" data-ctrl="pitch">
-    <div class="dial-head"><span class="label">AIM · PITCH</span><span class="num" id="valPitch">+03°</span></div>
+    <div class="dial-head"><span class="label">PITCH</span><span class="num" id="valPitch">+03°</span></div>
     <svg viewBox="0 0 120 120"><circle class="bezel" cx="60" cy="60" r="57"/><g class="dticks"></g>
       <g class="knob"><circle class="knob-body" cx="60" cy="60" r="40"/><line class="knob-ind" x1="60" y1="52" x2="60" y2="24"/><circle class="dimple" cx="60" cy="38" r="7"/></g></svg>
   </div>
@@ -209,6 +238,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 </div>
 
 <div id="overlay" class="plate"></div>
+<div id="rotate"><b>TURN YOUR PHONE SIDEWAYS</b><span>The cockpit needs landscape: thrusters under your left thumb, aim under your right.</span></div>
 
 <div id="help" class="plate" hidden>
   <h2>CONTROLS</h2>
